@@ -1,7 +1,5 @@
 #include "cpu.hpp"
 
-using namespace std;
-
 void CpuStatusFlag::operator[](const char po[]) {
 	char d1 = po[0];
 	char d2 = po[1];
@@ -38,7 +36,7 @@ bool CpuStatusFlag::Get(const char po[]) {//length=2(yy)
 		return false;
 	}
 }
-void CpuStatusFlag::HelpFunc(bit08jcq s) {
+void CpuStatusFlag::HelpFunc(bit08data s) {
 	Data = Data >> s;
 	if (Data & 1ull == 1) {
 		--Data;
@@ -47,50 +45,13 @@ void CpuStatusFlag::HelpFunc(bit08jcq s) {
 	}
 	Data = Data << s;
 }
-bool CpuStatusFlag::HelpGetFunc(bit08jcq s) {
+bool CpuStatusFlag::HelpGetFunc(bit08data s) {
 	return (Data >> s) & 1ull == 1;
 }
 
-bit64jcq* CPUJCQs::GetBit64JCQ(const string name) {
-	const array<string,16> JCQs = {"rax","rbx","rcx","rdx","rex","rfx","r7","r8","r9","r10","r11","r12","r13","r14","r15","r16"};
-	const array<bit64jcq*,16> JCQRefs = {&rax,&rbx,&rcx,&rdx,&rex,&rfx,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16};
-	for (int i = 0;i < JCQs.size();++i) {
-		if (JCQs[i] == name) {
-			return JCQRefs[i];
-		}
-	}
-	return nullptr;
-}
-
-bit32jcq* CPUJCQs::GetBit32JCQ(const string name) {
-	const array<string,16> JCQs = {"eax","ebx","ecx","edx","eex","efx","e7","e8","e9","e10","e11","e12","e13","e14","e15","e16"};
-	const array<bit32jcq*,16> JCQRefs = {&eax,&ebx,&ecx,&edx,&eex,&efx,&e7,&e8,&e9,&e10,&e11,&e12,&e13,&e14,&e15,&e16};
-	for (int i = 0;i < JCQs.size();++i) {
-		if (JCQs[i] == name) {
-			return JCQRefs[i];
-		}
-	}
-	return nullptr;
-}
-
-bit16jcq* CPUJCQs::GetBit16JCQ(const string name) {
-	const array<string,16> JCQs = {"ax","bx","cx","dx","ex","fx","x7","x8","x9","x10","x11","x12","x13","x14","x15","x16"};
-	const array<bit16jcq*,16> JCQRefs = {&ax,&bx,&cx,&dx,&ex,&fx,&x7,&x8,&x9,&x10,&x11,&x12,&x13,&x14,&x15,&x16};
-	for (int i = 0;i < JCQs.size();++i) {
-		if (JCQs[i] == name) {
-			return JCQRefs[i];
-		}
-	}
-	return nullptr;
-}
-
-bit64jcq* CPUJCQs::GetTCJCQ(const string name) {
-	const char tmp[3] = "16";
-	if (!flag.Get(tmp)) {
-		return nullptr;
-	}
-	const array<string,3> JCQs = {"tr","ts","ca"};
-	const array<bit64jcq*,3> JCQRefs = {&tr,&ts,&ca};
+bit64data* CPUJCQs::GetNativeJCQ(const string name) {
+	const array<string,19> JCQs = {"tr","ts","ca","rax","rbx","rcx","rdx","rex","rfx","r7","r8","r9","r10","r11","r12","r13","r14","r15","r16"};
+	const array<bit64data*,19> JCQRefs = {&tr,&ts,&ca,&rax,&rbx,&rcx,&rdx,&rex,&rfx,&r7,&r8,&r9,&r10,&r11,&r12,&r13,&r14,&r15,&r16};
 	for (int i = 0;i < JCQs.size();++i) {
 		if (JCQs[i] == name) {
 			return JCQRefs[i];
@@ -100,47 +61,16 @@ bit64jcq* CPUJCQs::GetTCJCQ(const string name) {
 }
 
 Memory::Memory() {
-	MemoryStart = malloc(MemoryLong);
-	MemoryEnd = MemoryStart + MemoryLong;
-	if (MemoryStart == NULL) {
-		MemoryStart = nullptr;
-		MemoryEnd = nullptr;
-	}
+	MemoryStart = new bit64data[MemoryLong];
+	MemoryEnd = MemoryStart + MemoryLong - 1;
 }
 Memory::~Memory() {
-	free(MemoryStart);
+	delete[] MemoryStart;
 }
 
-bit08jcq* Memory::GetMemory(bit08addr pi) {
-	bit08addr* get = (bit08addr*)MemoryStart + pi;
-	if (get >= (bit08addr*)MemoryEnd) {
-		return NULL;
-	} else {
-		return get;
-	}
-}
-
-bit16jcq* Memory::GetMemory(bit16addr pi) {
-	bit16addr* get = (bit16addr*)MemoryStart + pi;
-	if (get >= (bit16addr*)MemoryEnd) {
-		return NULL;
-	} else {
-		return get;
-	}
-}
-
-bit32jcq* Memory::GetMemory(bit32addr pi) {
-	bit32addr* get = (bit32addr*)MemoryStart + pi;
-	if (get >= (bit32addr*)MemoryEnd) {
-		return NULL;
-	} else {
-		return get;
-	}
-}
-
-bit64jcq* Memory::GetMemory(bit64addr pi) {
-	bit64addr* get = (bit64addr*)MemoryStart + pi;
-	if (get >= (bit64addr*)MemoryEnd) {
+bit64data* Memory::GetMemory(bit64data pi) {
+	bit64data* get = (bit64data*)MemoryStart + pi;
+	if (get >= (bit64data*)MemoryEnd) {
 		return NULL;
 	} else {
 		return get;
@@ -151,52 +81,20 @@ Memory::operator unsigned long long() {
 	return MemoryLong;
 }
 
+Thread::Thread() {
+	Thread(0,0x1000);
+}
+
+Thread::Thread(bit64data code,bit64data sr) {
+	Init(code,sr);
+}
+
 void Thread::Work() {
-	if (JCQ.flag.Get("16")) {
-		WorkForBit<bit16jcq,bit16addr>();
-	} else if (JCQ.flag.Get("32")) {
-		WorkForBit<bit32jcq,bit32addr>();
-	} else if (JCQ.flag.Get("64")) {
-		WorkForBit<bit64jcq,bit64addr>();
-	} else {
-		channel.Throw = true;
-		channel.ThrowTo = -1;
-		channel.ThrowID = 0;
-	}
+	auto GetMemory = [&](bit64data d){return MemoryPoint->GetMemory(d);};
+	Help(GetMemory,"0x%04x");
 }
 
-template <>
-void Thread::WorkForBit<bit16jcq,bit16addr>() {
-	using T     = bit16jcq;
-	using TAddr = bit16addr;
-	auto GetJCQ    = [&](const string name){return JCQ.GetBit16JCQ(name);};
-	auto GetMemory = [&](TAddr addr){return MemoryPoint->GetMemory(addr);};
-
-	Help<T,TAddr>(GetMemory,GetJCQ,("0x%0" + to_string(sizeof(T)*8/16) + "x").data());
-}
-
-template <>
-void Thread::WorkForBit<bit32jcq,bit32addr>() {
-	using T     = bit32jcq;
-	using TAddr = bit32addr;
-	auto GetMemory = [&](TAddr addr){return MemoryPoint->GetMemory(addr);};
-	auto GetJCQ    = [&](const string name){return JCQ.GetBit32JCQ(name);};
-
-	Help<T,TAddr>(GetMemory,GetJCQ,("0x%0" + to_string(sizeof(T)*8/16) + "x").data());
-}
-
-template <>
-void Thread::WorkForBit<bit64jcq,bit64addr>() {
-	using T     = bit64jcq;
-	using TAddr = bit64addr;
-	auto GetMemory = [&](TAddr addr){return MemoryPoint->GetMemory(addr);};
-	auto GetJCQ    = [&](const string name){return JCQ.GetBit64JCQ(name);};
-
-	Help<T,TAddr>(GetMemory,GetJCQ,("0x%0" + to_string(sizeof(T)*8/16) + "x").data());
-}
-
-template <typename T,typename TAddr>
-void Thread::Help(function<T* (TAddr)> GetMemory,function<T* (const string)> GetJCQ,const char* DisplayFlag) {
+void Thread::Help(function<bit64data* (bit64data)> GetMemory,const char* DisplayFlag) {
 	Status = CPUStatus::Working;
 	while (true) {
 		if (channel.HadData) {
@@ -211,28 +109,33 @@ void Thread::Help(function<T* (TAddr)> GetMemory,function<T* (const string)> Get
 		if (starts_with(code,"shut")) {
 			break;
 		} else if (starts_with(code,"mov")) {
-			auto args = GetArgs<T,TAddr>(code,3,2,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] = *args[0];
 		} else if (starts_with(code,"disl")) {
-			auto args = GetArgs<T,TAddr>(code,4,1,GetMemory,GetJCQ);
+			auto args = GetArgs(code,4,1,GetMemory);
 			printf(DisplayFlag, *args[0]);
 			cout << endl;
 		} else if (starts_with(code,"discl")) {
-			auto args = GetArgs<T,TAddr>(code,5,1,GetMemory,GetJCQ);
-			cout << ((char)*args[0]) << ((char)(*args[0] >> 8)) << endl;
+			auto args = GetArgs(code,5,1,GetMemory);
+			for (int i = 0;i < sizeof(bit64data)/2;++i) {
+				cout << (char)(*args[0] >> 8*i);
+			}
+			cout << endl;
 		} else if (starts_with(code,"disnl")) {
 			cout << endl;
 		} else if (starts_with(code,"disc")) {
-			auto args = GetArgs<T,TAddr>(code,4,1,GetMemory,GetJCQ);
-			cout << (char)*args[0] << (char)(*args[0] >> 8);
+			auto args = GetArgs(code,4,1,GetMemory);
+			for (int i = 0;i < sizeof(bit64data)/2;++i) {
+				cout << (char)(*args[0] >> 8*i);
+			}
 		} else if (starts_with(code,"dis")) {
-			auto args = GetArgs<T,TAddr>(code,3,1,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,1,GetMemory);
 			printf(DisplayFlag, *args[0]);
 		} else if (starts_with(code,"add")) {
-			auto args = GetArgs<T,TAddr>(code,3,2,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] += *args[0];
 		} else if (starts_with(code,"sub")) {
-			auto args = GetArgs<T,TAddr>(code,3,2,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] -= *args[0];
 		} else if (starts_with(code,"hlt")) {
 			Status = CPUStatus::HLT;
@@ -244,13 +147,13 @@ void Thread::Help(function<T* (TAddr)> GetMemory,function<T* (const string)> Get
 			}
 			Status = CPUStatus::Working;
 		} else if (starts_with(code,"int")) {
-			auto args = GetArgs<T,TAddr>(code,3,1,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,1,GetMemory);
 			channel.ThrowID = *args[0];
 			channel.ThrowTo = -1;
 			channel.ThrowData = 0;
 			channel.Throw = true;
 		} else if (starts_with(code,"in3")) {
-			auto args = GetArgs<T,TAddr>(code,3,3,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,3,GetMemory);
 			channel.ThrowID = *args[0];
 			channel.ThrowTo = *args[1];
 			channel.ThrowData = *args[2];
@@ -258,64 +161,64 @@ void Thread::Help(function<T* (TAddr)> GetMemory,function<T* (const string)> Get
 		} else if (starts_with(code,"nop")) {
 			;
 		} else if (starts_with(code,"jmp")) {
-			auto args = GetArgs<T,TAddr>(code,3,1,GetMemory,GetJCQ);
-			*JCQ.GetTCJCQ("ca") = *args[0];
+			auto args = GetArgs(code,3,1,GetMemory);
+			*GetJCQ("ca") = *args[0];
 		} else if (starts_with(code,"lmb")) {
-			auto args = GetArgs<T,TAddr>(code,3,2,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] << *args[0];
 		} else if (starts_with(code,"rmb")) {
-			auto args = GetArgs<T,TAddr>(code,3,2,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] >> *args[0];
 		} else if (starts_with(code,"push")) {
-			auto args = GetArgs<T,TAddr>(code,4,1,GetMemory,GetJCQ);
+			auto args = GetArgs(code,4,1,GetMemory);
 			*GetMemory(*GetJCQ("tr") + *GetJCQ("ts")) = *args[0];
 			*GetJCQ("ts") += 1;
 		} else if (starts_with(code,"pop")) {
-			auto args = GetArgs<T,TAddr>(code,3,1,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,1,GetMemory);
 			*args[0] = *GetMemory(*GetJCQ("tr") + *GetJCQ("ts"));
 			*GetJCQ("ts") -= 1;
 		} else if (starts_with(code,"je")) {
-			auto args = GetArgs<T,TAddr>(code,2,3,GetMemory,GetJCQ);
+			auto args = GetArgs(code,2,3,GetMemory);
 			if (*args[0] == *args[1]) {
-				*JCQ.GetTCJCQ("ca") = *args[2];
+				*GetJCQ("ca") = *args[2];
 			}
 		} else if (starts_with(code,"jne")) {
-			auto args = GetArgs<T,TAddr>(code,3,3,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,3,GetMemory);
 			if (*args[0] != *args[1]) {
-				*JCQ.GetTCJCQ("ca") = *args[2];
+				*GetJCQ("ca") = *args[2];
 			}
 		} else if (starts_with(code,"jg")) {
-			auto args = GetArgs<T,TAddr>(code,2,3,GetMemory,GetJCQ);
+			auto args = GetArgs(code,2,3,GetMemory);
 			if (*args[0] > *args[1]) {
-				*JCQ.GetTCJCQ("ca") = *args[2];
+				*GetJCQ("ca") = *args[2];
 			}
 		} else if (starts_with(code,"jl")) {
-			auto args = GetArgs<T,TAddr>(code,2,3,GetMemory,GetJCQ);
+			auto args = GetArgs(code,2,3,GetMemory);
 			if (*args[0] < *args[1]) {
-				*JCQ.GetTCJCQ("ca") = *args[2];
+				*GetJCQ("ca") = *args[2];
 			}
 		} else if (starts_with(code,"mod")) {
-			auto args = GetArgs<T,TAddr>(code,3,2,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] %= *args[0];
 		} else if (starts_with(code,"div")) {
-			auto args = GetArgs<T,TAddr>(code,3,2,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] /= *args[0];
 		} else if (starts_with(code,"mul")) {
-			auto args = GetArgs<T,TAddr>(code,3,2,GetMemory,GetJCQ);
+			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] *= *args[0];
 		} else if (starts_with(code,"cpuid")) {
-			char info[6][64] = {
-				"LiZongEn(r) Bandysol(r) Galaxy(c) CPU G9-1900F               \n",
-				"Core1 Thread2 1.10GHz                                        \n",
-				"Instruction Set Version:Galaxy  1.0.0.0_0                    \n",
-				"Baseband Version       :NewStar 1.0.0.0_0                    \n",
-				"Made in China & Made in PRC                                  \n",
-				"2023-08-26                                                   \n"
+			char info[6][65] = {
+				"ChunHuiStudio(r) WinterSun(c) CPU G9-1900F                     \n",
+				"Core1 Thread2 1.10GHz                                          \n",
+				"Instruction Set Version:Galaxy 0.0.0.0_0                       \n",
+				"Architecture Version   :Haruki 0.0.0.0_0                       \n",
+				"Made in China/PRC                                              \n",
+				"2023-09-01                                                     \n"
 			};
 
-			auto args = GetArgs<T,TAddr>(code,5,1,GetMemory,GetJCQ);
+			auto args = GetArgs(code,5,1,GetMemory);
 			for (int i = 0;i < 6;++i) {
-				testInsr(MemoryPoint,*args[0]+i,info[i]);
+				testInsr(MemoryPoint,*args[0]+i*0x0010,info[i]);
 			}
 
 		}
@@ -327,19 +230,18 @@ void Thread::Help(function<T* (TAddr)> GetMemory,function<T* (const string)> Get
 string Thread::GetCode(int length) {
 	string ret = "";
 	for (int i = 0;i < 0x0010;++i) {
-		bit64jcq tttmp = *(MemoryPoint->GetMemory(*JCQ.GetTCJCQ("ca")));
+		bit64data tttmp = *(MemoryPoint->GetMemory(*GetJCQ("ca")));
 		for (int j = 0;j < 4;++j) {
 			ret += (char)(tttmp >> (j*8));
 		}
-		++(*JCQ.GetTCJCQ("ca"));
+		++(*GetJCQ("ca"));
 	}
 	return ret;
 }
 
-template <typename WorkBitJCQT,typename TAddr>
-vector<WorkBitJCQT*> Thread::GetArgs(string con,int conlen,int args,function<WorkBitJCQT* (TAddr)> GetMemory,function<WorkBitJCQT* (const string)> GetJCQ,vector<char> mid,vector<char> end) {
+vector<bit64data*> Thread::GetArgs(string con,int conlen,int args,function<bit64data* (bit64data)> GetMemory,vector<char> mid,vector<char> end) {
 	con.erase(0,conlen+1);
-	vector<WorkBitJCQT*> ret;
+	vector<bit64data*> ret;
 
 	for (int i = 0;i < args;++i) {
 		vector<char> scanVector = i==args-1 ? end : mid;
@@ -352,7 +254,7 @@ vector<WorkBitJCQT*> Thread::GetArgs(string con,int conlen,int args,function<Wor
 			thisstr += con[0];
 			con.erase(0,1);
 		}
-		WorkBitJCQT* thisptr = nullptr;
+		bit64data* thisptr = nullptr;
 		if (starts_with(thisstr,"%")) {
 			thisstr.erase(0,1);
 			thisptr = GetJCQ(thisstr);
@@ -364,9 +266,9 @@ vector<WorkBitJCQT*> Thread::GetArgs(string con,int conlen,int args,function<Wor
 		} else {
 			thisptr = GetJCQ(thisstr);
 			if (thisptr==nullptr && !thisstr.empty()) {
-				*(WorkBitJCQT*)(LetsNumberBuffer + HadLets*2) = stoull(thisstr,nullptr,0);
-				thisptr = (WorkBitJCQT*)(LetsNumberBuffer + HadLets*2);
-				++HadLets;
+				*(bit64data*)(LetsNumberBuffer + HadLets*2) = stoull(thisstr,nullptr,0);
+				thisptr = (bit64data*)(LetsNumberBuffer + HadLets*2);
+				++HadLets; 
 			}
 		}
 		ret.push_back(thisptr);
@@ -374,25 +276,15 @@ vector<WorkBitJCQT*> Thread::GetArgs(string con,int conlen,int args,function<Wor
 	return ret;
 }
 
-template <typename WorkBitJCQT,typename TAddr>
-vector<WorkBitJCQT> Thread::GetDataArgs(string con,int conlen,int args, function<WorkBitJCQT* (TAddr)> GetMemory,function<WorkBitJCQT* (const string)> GetJCQ,vector<char> mid,vector<char> end) {
-	auto pois = GetArgs(con,conlen,args,GetMemory,GetJCQ);
-	vector<WorkBitJCQT> ret;
-	for (int i = 0;i < pois.size();++i) {
-		ret.push_back(pois[i]);
-	}
-	return ret;
-}
-
 Thread::~Thread() {
-	free(LetsNumberBuffer);
+	delete[] LetsNumberBuffer;
 }
 
-void Thread::Init(bit16addr code,bit16addr sr) {
-	LetsNumberBuffer = malloc(LetsNumberBufferLength);
+void Thread::Init(bit64data code,bit64data sr) {
+	LetsNumberBuffer = new bit64data[8];
 
-	*JCQ.GetTCJCQ("ca") = code;
-	*JCQ.GetTCJCQ("tr") = sr;
+	*GetJCQ("ca") = code;
+	*GetJCQ("tr") = sr;
 }
 
 Core::operator int() {
@@ -438,20 +330,18 @@ void PC::Powar() {
 int main() {
 	auto str = clock();
 	char Oldcommand[100][65] = {
-		"sub 1,x16                                                       ",
-		"mov 0xe0,bx                                                     ",
+		"sub 1,r16                                                       ",
+		"mov 0xe0,rbx                                                    ",
 
-		//"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345678900",
-
-		"add 0x1,x16                                                     ",
-		"mov %x16,x14                                                    ",
+		"add 0x1,r16                                                     ",
+		"mov %r16,r14                                                    ",
 		"disc x14                                                        ",
-		"sub 1,bx                                                        ",
-		"mov bx,cx                                                       ",
-		"mod 0x10,cx                                                     ",
-		"je cx,0,0xc0                                                    ",
-		"jne bx,0,0x20                                                   ",
-		"je bx,0,0xd0                                                    ",
+		"sub 1,rbx                                                       ",
+		"mov bx,rcx                                                      ",
+		"mod 0x10,rcx                                                    ",
+		"je rcx,0,0xc0                                                   ",
+		"jne rbx,0,0x20                                                  ",
+		"je rbx,0,0xd0                                                   ",
 
 		"disnl                                                           ",
 		"jmp 0x90                                                        ",
@@ -459,14 +349,14 @@ int main() {
 		"shut                                                            "
 	};
 	char command[100][65] = {
-		"mov 0x60,x16                                                    ",
+		"mov 0x60,r16                                                    ",
 		"cpuid 0x900                                                     ",
 
-		"mov 0x900,ax                                                    ",
-		"disc %ax                                                        ",
-		"add 1,ax                                                        ",
-		"sub 1,x16                                                       ",
-		"je x16,0,0x90                                                   ",
+		"mov 0x900,rax                                                   ",
+		"disc %rax                                                       ",
+		"add 1,rax                                                       ",
+		"sub 1,r16                                                       ",
+		"je r16,0,0x80                                                   ",
 		"jmp 0x30                                                        ",
 
 		"shut                                                            "
@@ -476,30 +366,19 @@ int main() {
 	for (int i = 0;i < 100;++i) {
 		testInsr(&pc,0x0010*i,command[i]);
 	}
-	for (bit64addr i = 0;i < 0x100;++i) {
-		printf("%08x ", i);
-		printf("%08x ", *pc.memory.GetMemory(i) );
-		auto tmp = *pc.memory.GetMemory(i);
-		for (int j = 0;j < 4;++j) {
-			cout << ((char)(tmp >> (j*8)));
-		}
-		cout << endl;
-	}
-	pc.cpu[0].JCQ.flag["16"];
-	pc.cpu[0].JCQ.flag["64"];
 	pc.cpu[0].Work();
 	auto end = clock();
 	cout << endl << (end-str) << "ms" << endl;
 }
 
-void testInsr(PC* pc,bit64addr add,char d[64]) {
+void testInsr(PC* pc,bit64data add,char d[64]) {
 	testInsr(&(pc->memory),add,d);
 }
 
-void testInsr(Memory* mem,bit64addr add,char d[64]) {
-	bit64jcq* tmp = mem->GetMemory(add);
+void testInsr(Memory* mem,bit64data add,char d[64]) {
+	bit64data* tmp = mem->GetMemory(add);
 	for (int i = 0;i < 64;i+=4) {
-		bit08jcq* low = (bit08jcq*)(tmp+(i/4));
+		bit08data* low = (bit08data*)(tmp+(i/4));
 		for (int j = 0;j < 4;++j) {
 			*(low+j) = d[i+j];
 		}
