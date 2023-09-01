@@ -329,17 +329,17 @@ void PC::Powar() {
 
 int main() {
 	auto str = clock();
-	char Oldcommand[100][65] = {
+	char command[100][65] = {
 		"sub 1,r16                                                       ",
 		"mov 0xe0,rbx                                                    ",
 
 		"add 0x1,r16                                                     ",
 		"mov %r16,r14                                                    ",
-		"disc x14                                                        ",
+		"disc r14                                                        ",
 		"sub 1,rbx                                                       ",
-		"mov bx,rcx                                                      ",
+		"mov rbx,rcx                                                     ",
 		"mod 0x10,rcx                                                    ",
-		"je rcx,0,0xc0                                                   ",
+		"je rcx,0,0xb0                                                   ",
 		"jne rbx,0,0x20                                                  ",
 		"je rbx,0,0xd0                                                   ",
 
@@ -348,7 +348,7 @@ int main() {
 
 		"shut                                                            "
 	};
-	char command[100][65] = {
+	char Oldcommand[100][65] = {
 		"mov 0x60,r16                                                    ",
 		"cpuid 0x900                                                     ",
 
