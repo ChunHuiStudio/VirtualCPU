@@ -328,6 +328,8 @@ void PC::Powar() {
 	cpu[0].Init(0x0000,0x1000);
 }
 
+#if DLLVersion
+#else
 int main() {
 	auto str = clock();
 #if Display
@@ -386,6 +388,7 @@ int main() {
 	auto end = clock();
 	cout << endl << (end-str) << "ms" << endl;
 }
+#endif
 
 void testInsr(PC* pc,workBit add,char d[64]) {
 	testInsr(&(pc->memory),add,d);
