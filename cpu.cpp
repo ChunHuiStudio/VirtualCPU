@@ -208,12 +208,12 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 			*args[1] *= *args[0];
 		} else if (starts_with(code,"cpuid")) {
 			char info[6][65] = {
-				"ChunHuiStudio(r) 2023(c) WinterSun(c) CPU G9-1900F             \n",
+				"ChunHuiStudio(2023)(r) WinterSun(c) CPU G9-1900F               \n",
 				"1*Core 2*Thread 1.10GHz                                        \n",
-				"Instruction Set Version:ChillyWinter 0.0.0.0_0                 \n",
-				"Architecture Version   :ChunHui      0.0.0.0_0                 \n",
+				"Instruction Set Version:ChillyWinter 1.0.0.0_1                 \n",
+				"Architecture Version   :ChunHui      1.0.2.0_2                 \n",
 				"Made in China/PRC                                              \n",
-				"2023-09-01                                                     \n"
+				"2023-09-02 18:15                                               \n"
 			};
 
 			auto args = GetArgs(code,5,1,GetMemory);
@@ -329,26 +329,26 @@ void PC::Powar() {
 
 int main() {
 	auto str = clock();
-	char Ocommand[100][65] = {
+	char command[100][65] = {
 		"sub 1,r16                                                       ",
-		"mov 0xe0,rbx                                                    ",
+		"mov 0x78,rbx                                                    ",
 
 		"add 0x1,r16                                                     ",
 		"mov %r16,r14                                                    ",
 		"disc r14                                                        ",
 		"sub 1,rbx                                                       ",
 		"mov rbx,rcx                                                     ",
-		"mod 0x10,rcx                                                    ",
-		"je rcx,0,0xb0                                                   ",
-		"jne rbx,0,0x20                                                  ",
-		"je rbx,0,0xd0                                                   ",
+		"mod 0x08,rcx                                                    ",
+		"je rcx,0,0x58                                                   ",
+		"jne rbx,0,0x10                                                  ",
+		"je rbx,0,0x68                                                   ",
 
 		"disnl                                                           ",
-		"jmp 0x90                                                        ",
+		"jmp 0x48                                                        ",
 
 		"shut                                                            "
 	};
-	char command[100][65] = {
+	char Ocommand[100][65] = {
 		"mov 0x30,r16                                                    ",
 		"cpuid 0x900                                                     ",
 
@@ -363,9 +363,20 @@ int main() {
 	};
 	PC pc;
 	pc.Powar();
-	for (int i = 0;i < 100;++i) {
+	for (workBit i = 0;i < 100;++i) {
 		testInsr(&pc,0x0008*i,command[i]);
 	}
+#if DEBUG
+	for (workBit i = 0;i < 0x80;++i) {
+		printf("%08x ", i);
+		printf("%08x ", *pc.memory.GetMemory(i) );
+		auto tmp = *pc.memory.GetMemory(i);
+		for (int j = 0;j < OnceBitChars;++j) {
+			cout << ((char)(tmp >> (j*8)));
+		}
+		cout << endl;
+	}
+#endif
 	pc.cpu[0].Work();
 	auto end = clock();
 	cout << endl << (end-str) << "ms" << endl;
