@@ -5,9 +5,18 @@
 #define bit16data unsigned short
 #define bit08data unsigned char
 
+#define workBit bit64data
+#define OnceBitChars (sizeof(workBit) / sizeof(unsigned char))
+
 #define GetJCQ(addr) JCQ.GetNativeJCQ(addr)
 
 #define codelong (sizeof(char) * 64)
+
+#if __GNUC__ && __cplusplus>201703L
+	#define threadClass jthread
+#else
+	#define threadClass thread
+#endif
 
 #include <iostream>
 #include <array>
@@ -16,10 +25,11 @@
 #include <thread>
 #include <cstdio>
 #include <functional>
+#include <format>
 
 using namespace std;
 
-#if __GNUC__ && __cplusplus<201402L
+#if ((__GNUC__ || __clang__) && __cplusplus<201402L) || (_MSC_VER && _MSVC_LANG<201402L)
 	constexpr chrono::milliseconds operator ""ms(unsigned long long ms) {
 		return chrono::milliseconds(ms);
 	}
@@ -34,7 +44,7 @@ struct CpuStatusFlag {
 		static const bit08data SafeMode  = 4;
 		static const bit08data PageMode  = 5;
 	public:
-		bit64data Data = 0b1001;
+		workBit Data = 0b1001;
 	public:
 		bool Get(const char po[]);
 		void operator[](const char po[]);
@@ -45,45 +55,45 @@ struct CpuStatusFlag {
 
 struct CPUJCQs {
 	private://64b
-	bit64data rax = 0;
-	bit64data rbx = 0;
-	bit64data rcx = 0;
-	bit64data rdx = 0;
-	bit64data rex = 0;
-	bit64data rfx = 0;
-	bit64data r7 = 0;
-	bit64data r8 = 0;
-	bit64data r9 = 0;
-	bit64data r10 = 0;
-	bit64data r11 = 0;
-	bit64data r12 = 0;
-	bit64data r13 = 0;
-	bit64data r14 = 0;
-	bit64data r15 = 0;
-	bit64data r16 = 0;
+	workBit rax = 0;
+	workBit rbx = 0;
+	workBit rcx = 0;
+	workBit rdx = 0;
+	workBit rex = 0;
+	workBit rfx = 0;
+	workBit r7 = 0;
+	workBit r8 = 0;
+	workBit r9 = 0;
+	workBit r10 = 0;
+	workBit r11 = 0;
+	workBit r12 = 0;
+	workBit r13 = 0;
+	workBit r14 = 0;
+	workBit r15 = 0;
+	workBit r16 = 0;
 
 	//ts&ro
-	bit64data tr = 0;//stack root address
+	workBit tr = 0;//stack root address
 
-	bit64data ts = 0;//stack shift address
+	workBit ts = 0;//stack shift address
 
-	bit64data ca = 0;//code address
+	workBit ca = 0;//code address
 
 	public:
 	CpuStatusFlag flag;
 
-	bit64data* GetNativeJCQ(string name);
+	workBit* GetNativeJCQ(string name);
 };
 
 struct Memory {
-	bit64data* MemoryStart = nullptr;
-	bit64data* MemoryEnd = nullptr;
+	workBit* MemoryStart = nullptr;
+	workBit* MemoryEnd = nullptr;
 	unsigned long long MemoryLong = 1024 * 1024 * 64;//B 64MB
 
 	Memory();
 	~Memory();
 
-	bit64data* GetMemory(bit64data pi);
+	workBit* GetMemory(workBit pi);
 
 	operator unsigned long long();
 };
@@ -107,12 +117,12 @@ enum CPUAuthority {
 struct ChannelAtThread {
 	bool HadData = false;
 	int ID = 0;
-	bit64data Data = 0;
+	workBit Data = 0;
 
 	bool Throw = false;
 	int ThrowID = 0;
 	int ThrowTo = 0;
-	bit64data ThrowData = 0;
+	workBit ThrowData = 0;
 };
 
 struct Thread {
@@ -122,23 +132,23 @@ struct Thread {
 	Memory* MemoryPoint = nullptr;
 	ChannelAtThread channel;
 
-	bit64data* LetsNumberBuffer = nullptr;
+	workBit* LetsNumberBuffer = nullptr;
 	int LetsNumberBufferLength = 512;
 	int HadLets = 0;
 
 	Thread();
-	Thread(bit64data code,bit64data sr);
+	Thread(workBit code,workBit sr);
 	~Thread();
 
 	void Work();
 
-	void Help(function<bit64data* (bit64data)> GetMemory,const char* DisplayFlag);
+	void Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag);
 
 	string GetCode(int length=16);
 
-	vector<bit64data*> GetArgs(string con,int conlen,int args, function<bit64data* (bit64data)> GetMemory,vector<char> mid = {','},vector<char> end = {' '});
+	vector<workBit*> GetArgs(string con,int conlen,int args, function<workBit* (workBit)> GetMemory,vector<char> mid = {','},vector<char> end = {' '});
 
-	void Init(bit64data code,bit64data sr);
+	void Init(workBit code,workBit sr);
 };
 
 struct Core {
@@ -149,11 +159,6 @@ struct Core {
 };
 
 struct ThreadChannel {
-	#if __GNUC__ && __cplusplus>201703L
-		#define threadClass jthread
-	#else
-		#define threadClass thread
-	#endif
 	threadClass ListenThread = threadClass([this]{
 		while (true) {
 			bool exit = true;
@@ -210,11 +215,11 @@ struct PC {
 	void Powar();
 };
 
-void testInsr(PC* pc,bit64data add,char d[]);
-void testInsr(Memory* mem,bit64data add,char d[]);
+void testInsr(PC* pc,workBit add,char d[]);
+void testInsr(Memory* mem,workBit add,char d[]);
 
 bool starts_with(string d,string ser) {
-	#if __GNUC__ && __cplusplus<=201703L
+	#if ((__GNUC__ || __clang__) && __cplusplus<=201703L) || (_MSC_VER && _MSVC_LANG<=201703L)
 		for (int i = 0;i < ser.size();++i) {
 			if (d[i] != ser[i]) {
 				return false;
