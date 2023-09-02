@@ -207,19 +207,9 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] *= *args[0];
 		} else if (starts_with(code,"cpuid")) {
-			char info[7][65] = {
-				"Copyright(c) 2023~2023 ChunHuiStudio(r)                        \n",
-				"WinterSun(r) CPU G9-1900F                                      \n",
-				"1*Core 2*Thread 1.10GHz                                        \n",
-				"Instruction Set Version:ChillyWinter 1.0.0.0_1                 \n",
-				"Architecture Version   :ChunHui      1.0.2.1_3                 \n",
-				"Made in China/PRC                                              \n",
-				"2023-09-02                                                     \n"
-			};
-
 			auto args = GetArgs(code,5,1,GetMemory);
 			for (int i = 0;i < 6;++i) {
-				testInsr(MemoryPoint,*args[0]+i*0x0008,info[i]);
+				testInsr(MemoryPoint,*args[0]+i*0x0008,(*CPUInfo)[i]);
 			}
 
 		}
@@ -300,7 +290,9 @@ template<int Cores>
 void CPU<Cores>::Init() {
 	for (int i = 0;i < Cores;++i) {
 		Data[i][0].MemoryPoint = memoryp;
+		Data[i][0].CPUInfo = &CPUInfo;
 		Data[i][1].MemoryPoint = memoryp;
+		Data[i][1].CPUInfo = &CPUInfo;
 	}
 	threadc.Threads = &(Data[0][0]);
 	threadc.memory = memoryp;

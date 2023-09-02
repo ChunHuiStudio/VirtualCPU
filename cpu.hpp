@@ -131,6 +131,7 @@ struct Thread {
 	CPUAuthority Authority = CPUAuthority::User;
 	Memory* MemoryPoint = nullptr;
 	ChannelAtThread channel;
+	char (*CPUInfo)[7][65] = nullptr;
 
 	workBit* LetsNumberBuffer = nullptr;
 	int LetsNumberBufferLength = 512;
@@ -201,6 +202,15 @@ struct CPU {
 	array<Core,Cores> Data;
 	Memory* memoryp = nullptr;
 	ThreadChannel threadc;
+	char CPUInfo[7][65] = {
+		"Copyright(c) 2023~2023 ChunHuiStudio(r)                        \n",
+		"WinterSun(r) CPU G9-1900F @ 1.10GHz                            \n",
+		"1*Core 2*Thread 1.10GHz                                        \n",
+		"Instruction Set Version:ChillyWinter 1.0.0.0_1                 \n",
+		"Architecture Version   :ChunHui      1.0.2.2_4                 \n",
+		"Made in China/PRC                                              \n",
+		"2023-09-02                                                     \n"
+	};
 
 	void Init();
 
