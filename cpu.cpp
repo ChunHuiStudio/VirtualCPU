@@ -207,13 +207,14 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] *= *args[0];
 		} else if (starts_with(code,"cpuid")) {
-			char info[6][65] = {
-				"ChunHuiStudio(2023)(r) WinterSun(c) CPU G9-1900F               \n",
+			char info[7][65] = {
+				"Copyright(c) 2023~2023 ChunHuiStudio(r)                        \n",
+				"WinterSun(r) CPU G9-1900F                                      \n",
 				"1*Core 2*Thread 1.10GHz                                        \n",
 				"Instruction Set Version:ChillyWinter 1.0.0.0_1                 \n",
-				"Architecture Version   :ChunHui      1.0.2.0_2                 \n",
+				"Architecture Version   :ChunHui      1.0.2.1_3                 \n",
 				"Made in China/PRC                                              \n",
-				"2023-09-02 18:15                                               \n"
+				"2023-09-02                                                     \n"
 			};
 
 			auto args = GetArgs(code,5,1,GetMemory);
@@ -329,6 +330,7 @@ void PC::Powar() {
 
 int main() {
 	auto str = clock();
+#if Display
 	char command[100][65] = {
 		"sub 1,r16                                                       ",
 		"mov 0x78,rbx                                                    ",
@@ -348,8 +350,10 @@ int main() {
 
 		"shut                                                            "
 	};
-	char Ocommand[100][65] = {
-		"mov 0x30,r16                                                    ",
+#endif
+#if CPUID
+	char command[100][65] = {
+		"mov 0x38,r16                                                    ",
 		"cpuid 0x900                                                     ",
 
 		"mov 0x900,rax                                                   ",
@@ -361,6 +365,7 @@ int main() {
 
 		"shut                                                            "
 	};
+#endif
 	PC pc;
 	pc.Powar();
 	for (workBit i = 0;i < 100;++i) {
