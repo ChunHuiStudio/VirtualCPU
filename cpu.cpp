@@ -211,7 +211,18 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 			for (int i = 0;i < 6;++i) {
 				testInsr(MemoryPoint,*args[0]+i*0x0008,(*CPUInfo)[i]);
 			}
-
+		} else if (starts_with(code,"and")) {
+			auto args = GetArgs(code,3,2,GetMemory);
+			*args[1] &= *args[0];
+		} else if (starts_with(code,"or")) {
+			auto args = GetArgs(code,2,2,GetMemory);
+			*args[1] |= *args[0];
+		} else if (starts_with(code,"xor")) {
+			auto args = GetArgs(code,3,2,GetMemory);
+			*args[1] ^= *args[0];
+		} else if (starts_with(code,"not")) {
+			auto args = GetArgs(code,3,1,GetMemory);
+			~(*args[1]);
 		}
 		HadLets = 0;
 	}
@@ -395,3 +406,53 @@ void testInsr(Memory* mem,workBit add,char d[64]) {
 		}
 	}
 }
+
+#if DiskBY
+Disk::Disk(string path) {
+	DiskFolderPath = path;
+}
+
+workBit Disk::Read(int No,unsigned short sec) {
+	for (int i = 0;i < BuffIndex.size();++i) {
+		if (BuffIndex[i] == No) {
+			++GetNumber[i];
+			return *(workBit*)(FileDataBuff[sec*OnceBitChars]);
+		}
+	}
+	ifstream reads;
+	reads.open(DiskFolderPath+No);
+	if (reads.fali()) {
+		return 0;
+	}
+	bit08data buff[FileLongB] = new bit08data[];
+	reads.read(buff,FileLongB);
+	workBit ret = *((workBit*)(buff[sec*OnceBitChars]));
+	reads.close();
+	delete[] buff;
+	return ret;
+}
+
+array<workBit,FileLongB / OnceBitChars> Disk::ReadFull(int No) {
+	array<workBit,FileLongB / OnceBitChars> ret;
+	for (int i = 0;i < FileLongB / OnceBitChars;++i) {
+		ret[i] = Read(No,i);
+	}
+	return ret;
+}
+
+void Disk::Write(int No,unsigned short sec,workBit data) {
+	for (int i = 0;i < BuffIndex.size();++i) {
+		if (BuffIndex[i] == No) {
+			BuffIndex = -1;
+		}
+	}
+	auto d = ReadFull(No);
+	d[sec] = data;
+	ofstream writes;
+	writes.open(DiskFolderPath+No,ios_base::out | ios_base::trunc | ios_base::binary);
+	for (int i = 0;i < s.size();++i) {
+		writes << d[i];
+	}
+	whites.close();
+}
+#endif
