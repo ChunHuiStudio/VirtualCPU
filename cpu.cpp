@@ -105,7 +105,9 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 			}
 		}
 		string code = GetCode(codelong);
-		//cout << "code:" << code << endl;
+		#ifdef DEBUG
+			cout << "code:" << code << endl;
+		#endif
 		if (starts_with(code,"shut")) {
 			break;
 		} else if (starts_with(code,"mov")) {
@@ -118,7 +120,7 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 		} else if (starts_with(code,"discl")) {
 			auto args = GetArgs(code,5,1,GetMemory);
 			for (int i = 0;i < OnceBitChars;++i) {
-				cout << (char)(*args[0] >> 8*i);
+				cout << (char)(*args[0] >> OnceBitChars*i);
 			}
 			cout << endl;
 		} else if (starts_with(code,"disnl")) {
@@ -209,7 +211,7 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 		} else if (starts_with(code,"cpuid")) {
 			auto args = GetArgs(code,5,1,GetMemory);
 			for (int i = 0;i < 6;++i) {
-				testInsr(MemoryPoint,*args[0]+i*0x0008,(*CPUInfo)[i]);
+				InsertToMemory(MemoryPoint,*args[0]+i*0x0008,(*CPUInfo)[i]);
 			}
 		} else if (starts_with(code,"and")) {
 			auto args = GetArgs(code,3,2,GetMemory);
@@ -223,6 +225,12 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 		} else if (starts_with(code,"not")) {
 			auto args = GetArgs(code,3,1,GetMemory);
 			~(*args[1]);
+		} else if (starts_with(code,"readf")) {
+			auto args = GetArgs(code,5,2,GetMemory);
+			DiskPoint->Read(*args[0],GetMemory(*args[1]));
+		} else if (starts_with(code,"writef")) {
+			auto args = GetArgs(code,6,2,GetMemory);
+			DiskPoint->Write(*args[0],GetMemory(*args[1]));
 		}
 		HadLets = 0;
 	}
@@ -301,8 +309,10 @@ template<int Cores>
 void CPU<Cores>::Init() {
 	for (int i = 0;i < Cores;++i) {
 		Data[i][0].MemoryPoint = memoryp;
+		Data[i][0].DiskPoint = diskp;
 		Data[i][0].CPUInfo = &CPUInfo;
 		Data[i][1].MemoryPoint = memoryp;
+		Data[i][1].DiskPoint = diskp;
 		Data[i][1].CPUInfo = &CPUInfo;
 	}
 	threadc.Threads = &(Data[0][0]);
@@ -326,16 +336,17 @@ Thread& CPU<Cores>::operator[](int ID) {
 
 void PC::Powar() {
 	cpu.memoryp = &memory;
+	cpu.diskp = &disk;
 	cpu.Init();
 	cpu[0].Authority = CPUAuthority::System;
 	cpu[0].Init(0x0000,0x1000);
 }
 
-#if DLLVersion
+#ifdef DLLVersion
 #else
 int main() {
 	auto str = clock();
-#if Display
+#ifdef Display
 	char command[100][65] = {
 		"sub 1,r16                                                       ",
 		"mov 0x78,rbx                                                    ",
@@ -356,7 +367,7 @@ int main() {
 		"shut                                                            "
 	};
 #endif
-#if CPUID
+#ifdef CPUID
 	char command[100][65] = {
 		"mov 0x38,r16                                                    ",
 		"cpuid 0x900                                                     ",
@@ -371,12 +382,18 @@ int main() {
 		"shut                                                            "
 	};
 #endif
+#ifdef DiskStart
+	char command[100][65] = {
+		"readf 0,0x8                                                     "
+	};
+#endif
 	PC pc;
 	pc.Powar();
 	for (workBit i = 0;i < 100;++i) {
-		testInsr(&pc,0x0008*i,command[i]);
+		InsertToMemory(&pc,0x0008*i,command[i]);
 	}
-#if DEBUG
+#ifdef DEBUG
+	pc.disk.Read(0,pc.memory.GetMemory(0));
 	for (workBit i = 0;i < 0x80;++i) {
 		printf("%08x ", i);
 		printf("%08x ", *pc.memory.GetMemory(i) );
@@ -393,11 +410,11 @@ int main() {
 }
 #endif
 
-void testInsr(PC* pc,workBit add,char d[64]) {
-	testInsr(&(pc->memory),add,d);
+void InsertToMemory(PC* pc,workBit add,char d[64]) {
+	InsertToMemory(&(pc->memory),add,d);
 }
 
-void testInsr(Memory* mem,workBit add,char d[64]) {
+void InsertToMemory(Memory* mem,workBit add,char d[64]) {
 	workBit* tmp = mem->GetMemory(add);
 	for (int i = 0;i < 64;i+=OnceBitChars) {
 		bit08data* low = (bit08data*)(tmp+(i/OnceBitChars));
@@ -407,52 +424,48 @@ void testInsr(Memory* mem,workBit add,char d[64]) {
 	}
 }
 
-#if DiskBY
-Disk::Disk(string path) {
-	DiskFolderPath = path;
-}
-
-workBit Disk::Read(int No,unsigned short sec) {
-	for (int i = 0;i < BuffIndex.size();++i) {
-		if (BuffIndex[i] == No) {
-			++GetNumber[i];
-			return *(workBit*)(FileDataBuff[sec*OnceBitChars]);
+void Disk::Read(int No,workBit* writBuff,int datas) {
+	ifstream reads = ifstream(DiskFolderPath+to_string(No),ios_base::in | ios_base::binary);
+	if (reads.fail()) {
+		for (int i = 0;i < datas;++i) {
+			*(writBuff+i) = 0;
 		}
+		return;
 	}
-	ifstream reads;
-	reads.open(DiskFolderPath+No);
-	if (reads.fali()) {
-		return 0;
-	}
-	bit08data buff[FileLongB] = new bit08data[];
-	reads.read(buff,FileLongB);
-	workBit ret = *((workBit*)(buff[sec*OnceBitChars]));
-	reads.close();
-	delete[] buff;
-	return ret;
-}
-
-array<workBit,FileLongB / OnceBitChars> Disk::ReadFull(int No) {
-	array<workBit,FileLongB / OnceBitChars> ret;
-	for (int i = 0;i < FileLongB / OnceBitChars;++i) {
-		ret[i] = Read(No,i);
-	}
-	return ret;
-}
-
-void Disk::Write(int No,unsigned short sec,workBit data) {
-	for (int i = 0;i < BuffIndex.size();++i) {
-		if (BuffIndex[i] == No) {
-			BuffIndex = -1;
+	for (int i = 0;i < datas;i+=OnceBitChars) {
+		array<bit08data,OnceBitChars> tmp;
+		for (int j = 0;j < OnceBitChars;++j) {
+			tmp[j] = reads.get();
 		}
+		*(writBuff+(i/8)) = CharToWorkBit(tmp);
 	}
-	auto d = ReadFull(No);
-	d[sec] = data;
+}
+
+void Disk::Write(int No,workBit* data,int datas) {
 	ofstream writes;
-	writes.open(DiskFolderPath+No,ios_base::out | ios_base::trunc | ios_base::binary);
-	for (int i = 0;i < s.size();++i) {
-		writes << d[i];
+	writes.open(DiskFolderPath+to_string(No),ios_base::out | ios_base::binary | ios_base::trunc);
+	if (writes.fail()) {
+		return;
 	}
-	whites.close();
+	for (int i = 0;i < datas;++i) {
+		writes << *(data+i);
+	}
 }
-#endif
+
+workBit CharToWorkBit(array<bit08data,OnceBitChars> d) {
+	workBit ret = 0;
+	bit08data* write = (bit08data*)&ret;
+	for (int i = 0;i < OnceBitChars;++i) {
+		*(write+i) = d[i];
+	}
+	return ret;
+}
+
+
+/*array<bit08data,OnceBitChars> WorkBitToChar(workBit d) {
+	array<bit08data,OnceBitChars> ret;
+	for (int i = 0;i < OnceBitChars;++i) {
+		array[i] = (bit08data)(d << (8*i));
+	}
+	return ret;
+}*/

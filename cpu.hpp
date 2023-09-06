@@ -27,7 +27,6 @@
 #include <thread>
 #include <cstdio>
 #include <functional>
-#include <format>
 #include <fstream>
 
 using namespace std;
@@ -37,6 +36,9 @@ using namespace std;
 		return chrono::milliseconds(ms);
 	}
 #endif
+
+workBit CharToWorkBit(array<bit08data,OnceBitChars> d);
+array<bit08data,OnceBitChars> WorkBitToChar(workBit d);
 
 struct CpuStatusFlag {
 	private:
@@ -101,6 +103,16 @@ struct Memory {
 	operator unsigned long long();
 };
 
+struct Disk {
+	string DiskFolderPath = ".\\Disk0\\";
+
+	Disk() {}
+	Disk(string path) {DiskFolderPath=path;}
+
+	void Read(int No,workBit* writBuff,int datas = 4096);
+	void Write(int No,workBit* data,int datas = 4096);
+};
+
 enum CPUStatus {
 	Working,//Working
 	Wait,//
@@ -133,6 +145,7 @@ struct Thread {
 	CPUStatus Status = CPUStatus::Shutdown;
 	CPUAuthority Authority = CPUAuthority::User;
 	Memory* MemoryPoint = nullptr;
+	Disk* DiskPoint = nullptr;
 	ChannelAtThread channel;
 	char (*CPUInfo)[7][65] = nullptr;
 
@@ -204,9 +217,10 @@ template <int Cores>
 struct CPU {
 	array<Core,Cores> Data;
 	Memory* memoryp = nullptr;
+	Disk* diskp = nullptr;
 	ThreadChannel threadc;
 	char CPUInfo[7][65] = {
-		"Copyright(c) 2023~2023 ChunHuiStudio(r)                        \n",
+		"Copyright(c) 2023 ChunHuiStudio(r)                             \n",
 		"WinterSun(r) 64Bit CPU G9-1900F @ 1.10GHz                      \n",
 		"1*Core 2*Thread 1.10GHz                                        \n",
 		"Instruction Set Version:ChillyWinter 1.1.0.0_2                 \n",
@@ -221,31 +235,16 @@ struct CPU {
 	Thread& operator[](int ID);
 };
 
-#if DiskBY
-struct Disk {
-	string DiskFolderPath = ".\\Disk0\\";
-	array<bit08data[],8> FileDataBuff;
-	array<int,8> BuffIndex;
-	array<int,8> GetNumber;
-
-	Disk() {}
-	Disk(string path);
-
-	workBit Read(int SQNo,unsigned short sec);
-	array<workBit,FileLongB / OnceBitChars> ReadFull(int No);
-	void Write(int SQNo,unsigned short sec,workBit data);
-};
-#endif
-
 struct PC {
 	CPU<1> cpu;
 	Memory memory = Memory();
+	Disk disk = Disk();
 
 	void Powar();
 };
 
-void testInsr(PC* pc,workBit add,char d[]);
-void testInsr(Memory* mem,workBit add,char d[]);
+void InsertToMemory(PC* pc,workBit add,char d[]);
+void InsertToMemory(Memory* mem,workBit add,char d[]);
 
 bool starts_with(string d,string ser) {
 	#if ((__GNUC__ || __clang__) && __cplusplus<=201703L) || (_MSC_VER && _MSVC_LANG<=201703L)
