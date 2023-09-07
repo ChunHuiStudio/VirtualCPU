@@ -149,6 +149,11 @@ struct Thread {
 	ChannelAtThread channel;
 	char (*CPUInfo)[7][65] = nullptr;
 
+	threadClass runThread;
+
+	workBit MemoryGetMax = 0;
+	workBit MemoryGetMix = 0;
+
 	workBit* LetsNumberBuffer = nullptr;
 	int LetsNumberBufferLength = 512;
 	int HadLets = 0;
@@ -158,12 +163,15 @@ struct Thread {
 	~Thread();
 
 	void Work();
+	void Join() {
+		runThread.join();
+	}
 
 	void Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag);
 
 	string GetCode(int length=16);
 
-	vector<workBit*> GetArgs(string con,int conlen,int args, function<workBit* (workBit)> GetMemory,vector<char> mid = {','},vector<char> end = {' '});
+	vector<workBit*> GetArgs(string con,int conlen,int args, function<workBit* (workBit)> GetMemory,vector<char> mid = {','},vector<char> end = {' ','\0','\n','\r'});
 
 	void Init(workBit code,workBit sr);
 };
@@ -223,10 +231,10 @@ struct CPU {
 		"Copyright(c) 2023 ChunHuiStudio(r)                             \n",
 		"WinterSun(r) 64Bit CPU G9-1900F @ 1.10GHz                      \n",
 		"1*Core 2*Thread 1.10GHz                                        \n",
-		"Instruction Set Version:ChillyWinter 1.1.0.0_2                 \n",
-		"Architecture Version   :ChunHui      1.0.2.2_4                 \n",
+		"Instruction Set Version:ChillyWinter 1.1.1.0_3                 \n",
+		"Architecture Version   :ChunHui      1.1.0.0_5                 \n",
 		"Made in China/PRC                                              \n",
-		"2023-09-02                                                     \n"
+		"2023-09-07                                                     \n"
 	};
 
 	void Init();

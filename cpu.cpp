@@ -90,8 +90,17 @@ Thread::Thread(workBit code,workBit sr) {
 }
 
 void Thread::Work() {
-	auto GetMemory = [&](workBit d){return MemoryPoint->GetMemory(d);};
-	Help(GetMemory,"0x%04x");
+
+	runThread = threadClass([this] {
+		auto GetMemory = [&](workBit d) {
+			if ((MemoryGetMax == 0 || MemoryGetMax >= d) && d >= MemoryGetMix) {
+				return MemoryPoint->GetMemory(d);
+			} else {
+				return (workBit*)nullptr;
+			}
+		};
+		Help(GetMemory,"0x%08x");
+	});
 }
 
 void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag) {
@@ -109,7 +118,9 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 			cout << "code:" << code << endl;
 		#endif
 		if (starts_with(code,"shut")) {
-			break;
+			if (Authority == CPUAuthority::System) {
+				break;
+			}
 		} else if (starts_with(code,"mov")) {
 			auto args = GetArgs(code,3,2,GetMemory);
 			*args[1] = *args[0];
@@ -231,6 +242,8 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 		} else if (starts_with(code,"writef")) {
 			auto args = GetArgs(code,6,2,GetMemory);
 			DiskPoint->Write(*args[0],GetMemory(*args[1]));
+		} else if (starts_with(code,"cls")) {
+			system("cls");
 		}
 		HadLets = 0;
 	}
@@ -369,6 +382,7 @@ int main() {
 #endif
 #ifdef CPUID
 	char command[100][65] = {
+		"cls                                                             ",
 		"mov 0x38,r16                                                    ",
 		"cpuid 0x900                                                     ",
 
@@ -376,8 +390,8 @@ int main() {
 		"disc %rax                                                       ",
 		"add 1,rax                                                       ",
 		"sub 1,r16                                                       ",
-		"je r16,0,0x40                                                   ",
-		"jmp 0x18                                                        ",
+		"je r16,0,0x48                                                   ",
+		"jmp 0x20                                                        ",
 
 		"shut                                                            "
 	};
@@ -405,6 +419,7 @@ int main() {
 	}
 #endif
 	pc.cpu[0].Work();
+	pc.cpu[0].Join();
 	auto end = clock();
 	cout << endl << (end-str) << "ms" << endl;
 }

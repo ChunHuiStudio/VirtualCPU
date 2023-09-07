@@ -1,4 +1,4 @@
-#include <iostream>
+#pragma once
 
 using namespace std;
 
@@ -48,15 +48,3 @@ enum DisplayColor {
 		white
 	#endif
 };
-
-
-std::string CPUInfo() {
-	PC pc;
-	auto tmp = pc.cpu.CPUInfo;
-	std::string ret = "";
-	for (int i = 0;i < 7;++i) {
-		std::string push = tmp[i];
-		ret += push;
-	}
-	return ret;
-}
