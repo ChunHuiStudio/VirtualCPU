@@ -6,19 +6,14 @@
 #define bit08data unsigned char
 
 #define workBit bit64data
-#define OnceBitChars (sizeof(workBit) / sizeof(unsigned char))
+#define CharType unsigned char
+#define OnceBitChars (sizeof(workBit) / sizeof(CharType))
 
 #define GetJCQ(addr) JCQ.GetNativeJCQ(addr)
 
 #define codelong (sizeof(char) * 64)
 
-#define FileLongB 4096
-
-#if __GNUC__ && __cplusplus>201703L
-	#define threadClass jthread
-#else
-	#define threadClass thread
-#endif
+#define threadClass jthread
 
 #include <iostream>
 #include <array>
@@ -31,31 +26,25 @@
 
 using namespace std;
 
-#if ((__GNUC__ || __clang__) && __cplusplus<201402L) || (_MSC_VER && _MSVC_LANG<201402L)
-	constexpr chrono::milliseconds operator ""ms(unsigned long long ms) {
-		return chrono::milliseconds(ms);
-	}
-#endif
-
-workBit CharToWorkBit(array<bit08data,OnceBitChars> d);
-array<bit08data,OnceBitChars> WorkBitToChar(workBit d);
+workBit CharToWorkBit(array<CharType,OnceBitChars> d);
+array<CharType,OnceBitChars> WorkBitToChar(workBit d);
 
 struct CpuStatusFlag {
 	private:
-		static const bit08data Bit16Mode = 0;
-		static const bit08data Bit32Mode = 1;
-		static const bit08data Bit64Mode = 2;
-		static const bit08data RealMode  = 3;
-		static const bit08data SafeMode  = 4;
-		static const bit08data PageMode  = 5;
+		static const CharType Bit16Mode = 0;
+		static const CharType Bit32Mode = 1;
+		static const CharType Bit64Mode = 2;
+		static const CharType RealMode  = 3;
+		static const CharType SafeMode  = 4;
+		static const CharType PageMode  = 5;
 	public:
 		workBit Data = 0b1001;
 	public:
 		bool Get(const char po[]);
 		void operator[](const char po[]);
 	private:
-		void HelpFunc(bit08data s);
-		bool HelpGetFunc(bit08data s);
+		void HelpFunc(CharType s);
+		bool HelpGetFunc(CharType s);
 };
 
 struct CPUJCQs {
@@ -93,7 +82,7 @@ struct CPUJCQs {
 struct Memory {
 	workBit* MemoryStart = nullptr;
 	workBit* MemoryEnd = nullptr;
-	unsigned long long MemoryLong = 1024 * 1024 * 64;//B 64MB
+	unsigned long long MemoryLong = 1024 * 1024 * 64 / 8;//B 64MB
 
 	Memory();
 	~Memory();
@@ -163,6 +152,7 @@ struct Thread {
 	~Thread();
 
 	void Work();
+
 	void Join() {
 		runThread.join();
 	}
@@ -171,7 +161,7 @@ struct Thread {
 
 	string GetCode(int length=16);
 
-	vector<workBit*> GetArgs(string con,int conlen,int args, function<workBit* (workBit)> GetMemory,vector<char> mid = {','},vector<char> end = {' ','\0','\n','\r'});
+	vector<workBit*> GetArgs(string con,int conlen,int args,function<workBit* (workBit)> GetMemory,vector<CharType> mid = {','},vector<CharType> end = {' ','\0','\n','\r'});
 
 	void Init(workBit code,workBit sr);
 };
@@ -232,9 +222,9 @@ struct CPU {
 		"WinterSun(r) 64Bit CPU G9-1900F @ 1.10GHz                      \n",
 		"1*Core 2*Thread 1.10GHz                                        \n",
 		"Instruction Set Version:ChillyWinter 1.1.1.0_3                 \n",
-		"Architecture Version   :ChunHui      1.1.0.0_5                 \n",
+		"Architecture Version   :ChunHui      1.1.1.0_6                 \n",
 		"Made in China/PRC                                              \n",
-		"2023-09-07                                                     \n"
+		"2023-09-10                                                     \n"
 	};
 
 	void Init();
@@ -251,18 +241,9 @@ struct PC {
 	void Powar();
 };
 
-void InsertToMemory(PC* pc,workBit add,char d[]);
-void InsertToMemory(Memory* mem,workBit add,char d[]);
+void InsertToMemory(PC* pc,workBit add,char d[64]);
+void InsertToMemory(Memory* mem,workBit add,char d[64]);
 
 bool starts_with(string d,string ser) {
-	#if ((__GNUC__ || __clang__) && __cplusplus<=201703L) || (_MSC_VER && _MSVC_LANG<=201703L)
-		for (int i = 0;i < ser.size();++i) {
-			if (d[i] != ser[i]) {
-				return false;
-			}
-		}
-		return true;
-	#else
-		return d.starts_with(ser);
-	#endif
+	return d.starts_with(ser);
 }

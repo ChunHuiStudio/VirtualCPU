@@ -71,7 +71,7 @@ Memory::~Memory() {
 workBit* Memory::GetMemory(workBit pi) {
 	workBit* get = (workBit*)MemoryStart + pi;
 	if (get >= (workBit*)MemoryEnd) {
-		return NULL;
+		return nullptr;
 	} else {
 		return get;
 	}
@@ -221,7 +221,7 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 			*args[1] *= *args[0];
 		} else if (starts_with(code,"cpuid")) {
 			auto args = GetArgs(code,5,1,GetMemory);
-			for (int i = 0;i < 6;++i) {
+			for (int i = 0;i < 7;++i) {
 				InsertToMemory(MemoryPoint,*args[0]+i*0x0008,(*CPUInfo)[i]);
 			}
 		} else if (starts_with(code,"and")) {
@@ -250,24 +250,12 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 	Status = CPUStatus::Shutdown;
 }
 
-string Thread::GetCode(int length) {
-	string ret = ""; 
-	for (int i = 0;i < 0x0008;++i) {
-		workBit tttmp = *(MemoryPoint->GetMemory(*GetJCQ("ca")));
-		for (int j = 0;j < OnceBitChars;++j) {
-			ret += (char)(tttmp >> (j*8));
-		}
-		++(*GetJCQ("ca"));
-	}
-	return ret;
-}
-
-vector<workBit*> Thread::GetArgs(string con,int conlen,int args,function<workBit* (workBit)> GetMemory,vector<char> mid,vector<char> end) {
+vector<workBit*> Thread::GetArgs(string con,int conlen,int args,function<workBit* (workBit)> GetMemory,vector<bit08data> mid,vector<bit08data> end) {
 	con.erase(0,conlen+1);
 	vector<workBit*> ret;
 
 	for (int i = 0;i < args;++i) {
-		vector<char> scanVector = i==args-1 ? end : mid;
+		vector<bit08data> scanVector = i==args-1 ? end : mid;
 		string thisstr = "";
 		while (true) {
 			if (scanVector[0] == con[0]) {
@@ -295,6 +283,18 @@ vector<workBit*> Thread::GetArgs(string con,int conlen,int args,function<workBit
 			}
 		}
 		ret.push_back(thisptr);
+	}
+	return ret;
+}
+
+string Thread::GetCode(int length) {
+	string ret = ""; 
+	for (int i = 0;i < 0x0008;++i) {
+		workBit tttmp = *(MemoryPoint->GetMemory(*GetJCQ("ca")));
+		for (int j = 0;j < OnceBitChars;++j) {
+			ret += (char)(tttmp >> (j*8));
+		}
+		++(*GetJCQ("ca"));
 	}
 	return ret;
 }
@@ -407,7 +407,6 @@ int main() {
 		InsertToMemory(&pc,0x0008*i,command[i]);
 	}
 #ifdef DEBUG
-	pc.disk.Read(0,pc.memory.GetMemory(0));
 	for (workBit i = 0;i < 0x80;++i) {
 		printf("%08x ", i);
 		printf("%08x ", *pc.memory.GetMemory(i) );
@@ -477,10 +476,10 @@ workBit CharToWorkBit(array<bit08data,OnceBitChars> d) {
 }
 
 
-/*array<bit08data,OnceBitChars> WorkBitToChar(workBit d) {
+array<bit08data,OnceBitChars> WorkBitToChar(workBit d) {
 	array<bit08data,OnceBitChars> ret;
 	for (int i = 0;i < OnceBitChars;++i) {
-		array[i] = (bit08data)(d << (8*i));
+		ret[i] = (bit08data)(d << (8*i));
 	}
 	return ret;
-}*/
+}
