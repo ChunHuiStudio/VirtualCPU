@@ -36,7 +36,7 @@ bool CpuStatusFlag::Get(const char po[]) {//length=2(yy)
 		return false;
 	}
 }
-void CpuStatusFlag::HelpFunc(bit08data s) {
+void CpuStatusFlag::HelpFunc(CharType s) {
 	Data = Data >> s;
 	if (Data & 1ull == 1) {
 		--Data;
@@ -45,7 +45,7 @@ void CpuStatusFlag::HelpFunc(bit08data s) {
 	}
 	Data = Data << s;
 }
-bool CpuStatusFlag::HelpGetFunc(bit08data s) {
+bool CpuStatusFlag::HelpGetFunc(CharType s) {
 	return (Data >> s) & 1ull == 1;
 }
 
@@ -250,12 +250,12 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 	Status = CPUStatus::Shutdown;
 }
 
-vector<workBit*> Thread::GetArgs(string con,int conlen,int args,function<workBit* (workBit)> GetMemory,vector<bit08data> mid,vector<bit08data> end) {
+vector<workBit*> Thread::GetArgs(string con,int conlen,int args,function<workBit* (workBit)> GetMemory,vector<CharType> mid,vector<CharType> end) {
 	con.erase(0,conlen+1);
 	vector<workBit*> ret;
 
 	for (int i = 0;i < args;++i) {
-		vector<bit08data> scanVector = i==args-1 ? end : mid;
+		vector<CharType> scanVector = i==args-1 ? end : mid;
 		string thisstr = "";
 		while (true) {
 			if (scanVector[0] == con[0]) {
@@ -431,7 +431,7 @@ void InsertToMemory(PC* pc,workBit add,char d[64]) {
 void InsertToMemory(Memory* mem,workBit add,char d[64]) {
 	workBit* tmp = mem->GetMemory(add);
 	for (int i = 0;i < 64;i+=OnceBitChars) {
-		bit08data* low = (bit08data*)(tmp+(i/OnceBitChars));
+		CharType* low = (CharType*)(tmp+(i/OnceBitChars));
 		for (int j = 0;j < OnceBitChars;++j) {
 			*(low+j) = d[i+j];
 		}
@@ -447,7 +447,7 @@ void Disk::Read(int No,workBit* writBuff,int datas) {
 		return;
 	}
 	for (int i = 0;i < datas;i+=OnceBitChars) {
-		array<bit08data,OnceBitChars> tmp;
+		array<CharType,OnceBitChars> tmp;
 		for (int j = 0;j < OnceBitChars;++j) {
 			tmp[j] = reads.get();
 		}
@@ -466,9 +466,9 @@ void Disk::Write(int No,workBit* data,int datas) {
 	}
 }
 
-workBit CharToWorkBit(array<bit08data,OnceBitChars> d) {
+workBit CharToWorkBit(array<CharType,OnceBitChars> d) {
 	workBit ret = 0;
-	bit08data* write = (bit08data*)&ret;
+	CharType* write = (CharType*)&ret;
 	for (int i = 0;i < OnceBitChars;++i) {
 		*(write+i) = d[i];
 	}
@@ -476,10 +476,10 @@ workBit CharToWorkBit(array<bit08data,OnceBitChars> d) {
 }
 
 
-array<bit08data,OnceBitChars> WorkBitToChar(workBit d) {
-	array<bit08data,OnceBitChars> ret;
+array<CharType,OnceBitChars> WorkBitToChar(workBit d) {
+	array<CharType,OnceBitChars> ret;
 	for (int i = 0;i < OnceBitChars;++i) {
-		ret[i] = (bit08data)(d << (8*i));
+		ret[i] = (CharType)(d << (8*i));
 	}
 	return ret;
 }
