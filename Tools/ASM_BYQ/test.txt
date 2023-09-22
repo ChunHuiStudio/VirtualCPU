@@ -1,0 +1,12 @@
+	mov 0x10,rbx
+
+Start:
+	mov 0x7a,rax
+	disc rax
+	sub 1,rbx
+	je rbx,0,EXIT
+	jmp Start
+
+EXIT:
+	shut
+	

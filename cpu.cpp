@@ -178,10 +178,10 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 			*GetJCQ("ca") = *args[0];
 		} else if (starts_with(code,"lmb")) {
 			auto args = GetArgs(code,3,2,GetMemory);
-			*args[1] << *args[0];
+			*args[1] <<= *args[0];
 		} else if (starts_with(code,"rmb")) {
 			auto args = GetArgs(code,3,2,GetMemory);
-			*args[1] >> *args[0];
+			*args[1] >>= *args[0];
 		} else if (starts_with(code,"push")) {
 			auto args = GetArgs(code,4,1,GetMemory);
 			*GetMemory(*GetJCQ("tr") + *GetJCQ("ts")) = *args[0];
@@ -235,7 +235,7 @@ void Thread::Help(function<workBit* (workBit)> GetMemory,const char* DisplayFlag
 			*args[1] ^= *args[0];
 		} else if (starts_with(code,"not")) {
 			auto args = GetArgs(code,3,1,GetMemory);
-			~(*args[1]);
+			*args[1] = ~(*args[1]);
 		} else if (starts_with(code,"readf")) {
 			auto args = GetArgs(code,5,2,GetMemory);
 			DiskPoint->Read(*args[0],GetMemory(*args[1]));
