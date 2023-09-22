@@ -1,13 +1,13 @@
 #include "Display.hpp"
 
 #ifdef _WIN32
-	namespace Windows {
+	namespace {
 		#include <windows.h>
 	}
 
 	void SetColorAndBackground(int ForgC,int BackC) {
-		Windows::WORD wColor = ((BackC & 0x0F) << 4) + (ForgC & 0x0F);
-		Windows::SetConsoleTextAttribute(Windows::GetStdHandle((Windows::DWORD)-11), wColor);
+		::WORD wColor = ((BackC & 0x0F) << 4) + (ForgC & 0x0F);
+		::SetConsoleTextAttribute(::GetStdHandle((::DWORD)-11), wColor);
 	}
 #endif
 

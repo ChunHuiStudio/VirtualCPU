@@ -1,4 +1,3 @@
-#include "Display.hpp"
 #include "BYQ.hpp"
 
 using namespace std;
@@ -43,14 +42,57 @@ void ReplaceString(std::string& subject, const std::string& search,const std::st
     }
 }
 
+void Start(string file) {
+	Command::FirstWork fw = Command::FirstWork(file);
+	fw();
+	Command::LastWork lw = Command::LastWork();
+	lw();
+}
+
 int main(int argc, char const *argv[]) {
 	if (argc < 2) {
 		DisplayERROR("没有源文件！\n");
 	} else {
-		Command::FirstWork fw(argv[1]);
-		fw();
-		Command::LastWork lw = Command::LastWork();
-		lw();
+		vector<string> args;
+		for (int i = 1;i < argc;++i) {
+			string str = argv[i];
+			args.push_back(str);
+		}
+
+		while (args.size() != 0) {
+			for (int i = 0;i < args.size();++i) {
+				if (args[i] == "-o") {
+					if ((i+1) < args.size()) {
+						EndFile = args[i+1];
+						args.erase(args.begin()+i,args.begin()+i+2);
+						break;
+					} else {
+						DisplayERROR("命令参数不正确。");
+					}
+				} else {
+					ofstream writes("__temp__.source.temps",ios_base::app | ios_base::out);
+					ifstream reads (args[i]);
+					while (reads.good()) {
+						char t = reads.get();
+						if (t != -1) {
+							writes << t;
+						}
+					}
+					writes << "\n";
+					args.erase(args.begin()+i);
+					break;
+				}
+			}
+		}
+		Start("__temp__.source.temps");
+#ifdef DEBUG
+#else
+#ifdef _WIN32
+		system("del __temp__.source.temps");
+#elif __linux__
+		system("rm __temp__.source.temps");
+#endif
+#endif
 	}
 	return 0;
 }
@@ -78,17 +120,15 @@ void Command::FirstWork::operator()() {
 			if (WorkStr) break;
 		}
 		if (WorkStr || reads.eof()) {
-			//cout << LineData << endl;
-
 			try {
 				if (LineData.starts_with(".orgs")) {
-					//cout << GetArgs(LineData,5,1).at(0);
 					StackBaseAddress = stoull(GetArgs(LineData,5,1).at(0));
 				} else if (LineData.starts_with(".orgc")) {
 					CodeBaseAddress  = stoull(GetArgs(LineData,5,1).at(0));
 				} else if (LineData.ends_with(":")) {
+					cout << (CodeNumber*CodeLong) << endl;
 					LineData.erase(LineData.size()-1,1);
-					LinkTableClass lt(LineData,to_string(CodeNumber*CodeLong));
+					LinkTableClass lt(LineData,to_string(CodeBaseAddress+CodeNumber*CodeLong));
 					LinkTable.push_back(lt);
 				} else {
 					CodeNumber++;
@@ -108,24 +148,53 @@ void Command::FirstWork::operator()() {
 
 void Command::LastWork::operator()() {
 	if (DontWork) return;
-	/*cout << "	Code:" << endl;
-	for (int i = 0;i < FileData.size();++i) {
-		cout << FileData[i];
-	}
 
-	cout << "	Table:" << endl;*/
 	for (int i = 0;i < LinkTable.size();++i) {
-		string LN = LinkTable[i].LinkName;
-		string RN = LinkTable[i].Replace;
-		//cout << LN << " " << RN << endl;
-		ReplaceString(FileData,LN,RN);
+		ReplaceString(FileData,LinkTable[i].LinkName,LinkTable[i].Replace);
 	}
 	ofstream writes(EndFile);
 
-
-	//cout << "	NewCode:" << endl;
+	int WriteChars = 0;
 	for (int i = 0;i < FileData.size();++i) {
-		writes << FileData[i];
-		//cout << FileData[i];
+		if (FileData[i] == '\n' || FileData[i] == '\r') {
+			if ((CodeWith - WriteChars) < 0) {
+				DisplayERROR("指令过长！\n");
+			}
+			for (int i = 0;i < (CodeWith - WriteChars);++i) {
+				writes << ' ';
+			}
+			writes << FileData[i];
+			WriteChars = 0;
+		} else {
+			writes << FileData[i];
+			++WriteChars;
+		}
+	}
+}
+
+#ifdef _WIN32
+	namespace {
+		#include <windows.h>
+	}
+
+	void SetColorAndBackground(int ForgC,int BackC) {
+		::WORD wColor = ((BackC & 0x0F) << 4) + (ForgC & 0x0F);
+		::SetConsoleTextAttribute(::GetStdHandle((::DWORD)-11), wColor);
+	}
+#endif
+
+void DisplayAtColor(string str,int color) {
+	if (color < 0x0 || color > 0xf) {
+		cout << str;
+	} else {
+		#if _WIN32
+			SetColorAndBackground(color);
+			cout << str;
+			SetColorAndBackground();
+		#elif __linux__
+    		cout << "\033[3"+to_string(color)+";1m" + str + "\033[0m";
+		#else
+			cout << str;
+		#endif
 	}
 }

@@ -5,12 +5,12 @@
 using namespace std;
 
 #if _WIN32
-	void SetColorAndBackground(int ForgC = 0x7, int BackC = 0x0);
+	__declspec(dllexport) void SetColorAndBackground(int ForgC = 0x7, int BackC = 0x0);
 #endif
 
-void DisplayAtColor(string str,int color);
+__declspec(dllexport) void DisplayAtColor(string str,int color);
 
-enum DisplayColor {
+__declspec(dllexport) enum DisplayColor {
 	#if _WIN32
 		black,
 		blue,
